@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import platform
 import re
 import sys
 if sys.version_info < (3, 0):
@@ -12,13 +13,20 @@ else:
 
 def download(output_dir, include_dir, source_url, filename):
     full_filename = os.path.join(output_dir, filename)
+    if platform.system() == "Windows":
+        full_filename = full_filename.replace("\\","/") # making paths consistent on windows
     if os.path.exists(full_filename):
         return
 
     include_file = os.path.join(include_dir, filename) if include_dir is not None else None
+    if platform.system() == "Windows":
+        include_file = include_file.replace("\\","/") # making paths consistent on windows
     if include_dir is not None and os.path.exists(include_file):
         print('Copying %s to %s' % (include_file, full_filename))
-        source = 'file://' + os.path.abspath(include_file) # file:// is required for python 3
+        if platform.system() == "Windows":
+            source = 'file:///' + os.path.abspath(include_file) # file:/// is required for python 3 on windows
+        else:
+            source = 'file://' + os.path.abspath(include_file) # file:// is required for python 3
     else:
         print('Downloading %s from %s to %s' % (filename, source_url, full_filename))
         source = source_url
@@ -26,6 +34,9 @@ def download(output_dir, include_dir, source_url, filename):
     dirname = os.path.dirname(full_filename)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
+        
+    if platform.system() == "Windows":
+        source=source.replace("\\","/") # making paths consistent on windows
     urlretrieve(source, full_filename)
 
 def parse_funcs(filename, regex_string, blacklist):
